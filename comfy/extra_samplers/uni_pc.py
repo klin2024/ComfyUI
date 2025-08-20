@@ -3,6 +3,7 @@
 import torch
 import math
 import logging
+import numpy as np
 
 from tqdm.auto import trange
 
@@ -640,7 +641,11 @@ class UniPC:
                 if order == 2:
                     rhos_p = torch.tensor([0.5], device=b.device)
                 else:
-                    rhos_p = torch.linalg.solve(R[:-1, :-1], b[:-1])
+                    R_np = R[:-1, :-1].detach().cpu().numpy()
+                    b_np = b[:-1].detach().cpu().numpy()
+                    rhos_p_np = np.linalg.solve(R_np, b_np)
+                    rhos_p = torch.from_numpy(rhos_p_np).to(R.device).to(x.dtype)
+
         else:
             D1s = None
 
@@ -650,7 +655,10 @@ class UniPC:
             if order == 1:
                 rhos_c = torch.tensor([0.5], device=b.device)
             else:
-                rhos_c = torch.linalg.solve(R, b)
+                R_np = R.detach().cpu().numpy()
+                b_np = b.detach().cpu().numpy()
+                rhos_c_np = np.linalg.solve(R_np, b_np)
+                rhos_c = torch.from_numpy(rhos_c_np).to(R.device).to(x.dtype)
 
         model_t = None
         if self.predict_x0:
